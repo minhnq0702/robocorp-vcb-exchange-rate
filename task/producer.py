@@ -8,7 +8,8 @@ from robocorp import log, workitems
 from robocorp.tasks import task
 from RPA.HTTP import HTTP
 
-OUTPUT_FOLDER = "./output"
+from .constants import OUTPUT_FOLDER
+
 VCB_URL = "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10"
 VCB_RATE_FILE = "vcb_rate.xml"
 
@@ -62,7 +63,7 @@ def read_xml_data(file_path):
                 'transfer': transfer,
                 'sell': sell,
             })
-    
+
     if not rate_date:
         log.info("No rate date found")
         return None, None
@@ -148,6 +149,7 @@ def create_work_items(rate_date: str, rate_data: list[dict[str, float]]):
             'rate_date': rate_date,
             **data,
         })
+
 
 if __name__ == "__main__":
     file_path = path.join(OUTPUT_FOLDER, VCB_RATE_FILE)

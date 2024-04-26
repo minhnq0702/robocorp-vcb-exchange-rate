@@ -7,7 +7,8 @@ from robocorp.tasks import task
 from RPA.Excel.Files import Files
 from RPA.Tables import Tables
 
-OUTPUT_FOLDER = "./output"
+from .constants import OUTPUT_FOLDER
+
 OUT_VCB_RATE_FILE = "rate_data.xlsx"
 table = Tables()
 wb = Files()
@@ -75,8 +76,8 @@ def push_data_to_excel(data: dict):
         wb.delete_rows(2)
 
     wb.append_rows_to_worksheet(
-        data, 
-        header=True, 
+        data,
+        header=True,
         formatting_as_empty=True,
     )
 
@@ -86,4 +87,8 @@ def push_data_to_api(data: dict):
 
 
 def submit_data():
-    wb.save_workbook()
+    try:
+        wb.save_workbook()
+    except Exception as e:
+        log.exception(str(e))
+
