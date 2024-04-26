@@ -4,6 +4,7 @@ import xml.etree.cElementTree as ET
 from os import path
 from xml.etree.ElementTree import Element
 
+import pytz
 from robocorp import log, workitems
 from robocorp.tasks import task
 from RPA.HTTP import HTTP
@@ -85,7 +86,8 @@ def _get_datetime_element(xml_child: Element) -> datetime.datetime | None:
         return None
 
     dt = datetime.datetime.strptime(dt_str, format_str)
-    return dt
+    dt = pytz.timezone('Asia/Ho_Chi_Minh').localize(dt)
+    return dt.astimezone(pytz.UTC)
 
 
 def _get_ex_rate(xml_child: Element) -> tuple[str, float | None, float | None, float | None]:
