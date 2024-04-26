@@ -3,9 +3,9 @@
 
 tasks:
   Get VCB Rate XML:
-    shell: python -m robocorp.tasks run producer.py
+    shell: python -m robocorp.tasks run task/producer.py
   Submit VCB Rate Items:
-    shell: python -m robocorp.tasks run consumer.py
+    shell: python -m robocorp.tasks run task/consumer.py
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml
