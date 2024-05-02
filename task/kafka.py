@@ -3,6 +3,7 @@ import json
 import os
 
 from kafka import KafkaProducer
+from robocorp import log
 
 
 class KafkaManager:
@@ -18,16 +19,16 @@ class KafkaManager:
 
     def __new__(cls):
         if cls._instance is None:
-            print('do init')
+            log.info('Init KafkaManager')
             cls._instance = super().__new__(cls)
             cls._instance.producer = cls._get_kafka_producer()
         else:
-            print('already init')
+            log.info('KafkaManager already initialized')
         return cls._instance
 
     def push_data(self, key: str, data_dict: dict, topic: str):
         if not self.producer:
-            print('Producer not initialized')
+            raise Exception('Kafka producer is not initialized')
             return
         
         # Convert the data dictionary to JSON
