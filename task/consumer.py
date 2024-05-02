@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from collections.abc import Callable
+from typing import ParamSpec
 
 from robocorp import log, workitems
 from robocorp.tasks import task
@@ -8,6 +9,7 @@ from RPA.Excel.Files import Files
 from RPA.Tables import Tables
 
 from .constants import OUTPUT_FOLDER
+from .kafka import KafkaManager
 
 OUT_VCB_RATE_FILE = "rate_data.xlsx"
 table = Tables()
@@ -15,7 +17,7 @@ wb = Files()
 
 
 @task
-def minimal_task():
+def submit_exchange_rate():
     """
     A minimal task that does nothing.
     """
@@ -30,33 +32,48 @@ def process_rate_data():
     """
     rate_date = None
     rate_data = []
+    submit_processor, final_func = get_processor()
+    if not submit_processor:
+        log.info('No processor found')
+        return rate_date, rate_data
+    
     for item in workitems.inputs:
         payload = item.payload
 
         if isinstance(payload, dict):
             try:
-                get_processor()(payload)
+                submit_processor(
+                    payload,
+                )
             except Exception as e:
                 item.fail(str(e))
             else:
                 item.done()
 
-    submit_data()
+    if final_func is not None:
+        final_func()
 
     return rate_date, rate_data
 
 
-def get_processor() -> Callable[[dict[str, float | str]], None]:
+def get_processor() -> tuple[Callable[[dict[str, float | str]], None] | None, Callable | None]:
     """Return a processor function based on the environment
 
     Returns:
-        Callable[[dict[str, float | str]], None]: Function to process rate data
+        Callable[[dict[str, float | str], **kwargs], Callable | None]: Function to process rate data
     """
-    return push_data_to_excel
-    # return push_data_to_api
+    push_method = os.environ.get('PUSH_METHOD', None)
+    if push_method == 'kafka':
+        return push_data_to_kafka, close_kafka_producer
+    elif push_method == 'excel':
+        return push_data_to_excel, submit_data
+    # elif push_method == 'api':
+    #     return push_data_to_api
+    return None, None
+    
 
-
-def push_data_to_excel(data: dict):
+# * -- Excel --
+def push_data_to_excel(data: dict[str, float | str]):
     try:
         wb.get_active_worksheet()
     except:
@@ -82,13 +99,29 @@ def push_data_to_excel(data: dict):
     )
 
 
-def push_data_to_api(data: dict):
-    pass
-
-
 def submit_data():
     try:
         wb.save_workbook()
     except Exception as e:
         log.exception(str(e))
 
+
+# * -- KAFKA --
+def push_data_to_kafka(data: dict[str, float | str]):
+    kafka_manager = KafkaManager()
+    # Use the kafka_manager instance to push data to Kafka
+    topic = str(os.environ.get('KAFKA_TOPIC', 'rate_data'))
+    kafka_manager.push_data(
+        'ExchangeRate',
+        data, 
+        topic,
+    )
+
+
+def close_kafka_producer():
+    kafka_manager = KafkaManager()
+    kafka_manager.close_producer()
+
+
+def push_data_to_api(data: dict[str, float | str]):
+    pass

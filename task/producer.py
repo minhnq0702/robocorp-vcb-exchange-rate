@@ -16,14 +16,13 @@ VCB_RATE_FILE = "vcb_rate.xml"
 
 
 @task
-def minimal_task():
+def get_exchange_rate():
     """
     A minimal task that does nothing.
     """
     http = HTTP()
     file_path = path.join(OUTPUT_FOLDER, VCB_RATE_FILE)
     file = http.download(VCB_URL, target_file=file_path, overwrite=True)
-    log.info(file)
     rate_date, rate_data = read_xml_data(file_path)
     if rate_date and rate_data:
         create_work_items(rate_date, rate_data)
